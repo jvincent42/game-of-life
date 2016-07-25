@@ -1,0 +1,9 @@
+
+.cell {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+}
+
+.alive { background-color: dodgerblue; }
+.dead { background-color: #d2c8c8; }
