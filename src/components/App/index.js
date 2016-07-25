@@ -1,37 +1,50 @@
 import React from 'react'
-import R, { map, identity, xprod, range, path, indexOf } from 'ramda'
+import R, { compose, map, identity, xprod, range, path, indexOf, assocPath, not, reduce } from 'ramda'
 
-import { createMatrice, fst, snd } from '../../utils'
+import { createMatrice, fst, snd, xyLens } from '../../utils'
 
 import Grid from '../Grid'
 
-const neighboursMatrice = xprod(range(-1, 2), range(-1, 2)).filter(x => !(fst(x) === 0 && snd(x) === 0))
+// Game utils
 
-const sumNeighbours = (grid, x, y) => {
-  return (
-    neighboursMatrice.reduce((acc, [i,j]) => {
-      return path([x + i, y + j], grid) ? acc + 1 : acc
-    }, 0)
-  )
-}
+const neighboursMatrice = xprod(range(-1, 2), range(-1, 2))
+                          .filter(x => !(fst(x) === 0 && snd(x) === 0))
+
+const sumNeighbours = (grid, x, y) =>
+  reduce((acc, [i,j]) =>
+    path([x + i, y + j], grid) ? acc + 1 : acc
+  , 0, neighboursMatrice)
 
 const getCellState = (grid, x, y) => {
+  // The two rules of the game of life are :
+  // - if cell is dead and has exactly 3 neighbours, it reborns and come alive, else it stay dead
+  // - if cell is alive and has 2 or 3 neighbours, it dies, else it stay alive
   const neighbours = sumNeighbours(grid, x, y)
   return !grid[x][y]
     ? neighbours === 3 ? true : false
     : indexOf(neighbours, [2,3]) > -1 ? true : false
 }
+/* Apply rules to all cells of a matrice */
+const applyLife = matrice => matrice.map((row, x) => row.map((c, y) => getCellState(matrice, x, y)))
+
+// Initial Game state
 
 const initialGrid = () => {
-  const grid = createMatrice(30)(30)(false)
+  const grid = createMatrice(30)(80)(false)
   grid[1][1] = true
   grid[1][2] = true
+  grid[0][2] = true
+  grid[2][2] = true
   grid[1][3] = true
   grid[10][10] = true
   grid[10][11] = true
+  grid[9][11] = true
+  grid[11][11] = true
   grid[10][12] = true
   return grid;
 }
+
+// Game component
 
 class App extends React.Component {
 
@@ -47,19 +60,9 @@ class App extends React.Component {
     this.renderLoop()
   }
 
-  updateState = (state) => {
-    if (!state.pause) {
-      const applyLife = grid => grid.map((r,x) => r.map((c,y) => getCellState(grid, x, y)))
-      const newGrid = applyLife(state.grid)
-      this.setState({ grid: newGrid })
-    }
-  }
-
   setStatus = (x, y) => {
-    const mutGrid = this.state.grid
-    mutGrid[x][y] = !mutGrid[x][y]
     this.setState({
-      grid: mutGrid
+      grid: R.over(xyLens(x, y), not, this.state.grid)
     })
   }
 
@@ -67,6 +70,14 @@ class App extends React.Component {
     this.setState({
       pause: !this.state.pause
     })
+  }
+
+  updateState = (state) => {
+    if (!state.pause) {
+      this.setState({
+        grid: applyLife(state.grid)
+      })
+    }
   }
 
   renderLoop = () => {
@@ -78,7 +89,7 @@ class App extends React.Component {
     return (
       <div>
         <Grid arr={ this.state.grid } setStatus={ this.setStatus } />
-        <button onClick={ this.setPause }>Pause</button>
+        <button onClick={ this.setPause }>{ this.state.pause ? "Live" : "Pause" }</button>
       </div>
     )
   }
