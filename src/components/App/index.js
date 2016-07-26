@@ -18,7 +18,7 @@ const sumNeighbours = (grid, x, y) =>
 const getCellState = (grid, x, y) => {
   // The two rules of the game of life are :
   // - if cell is dead and has exactly 3 neighbours, it reborns and come alive, else it stay dead
-  // - if cell is alive and has 2 or 3 neighbours, it dies, else it stay alive
+  // - if cell is alive and has 2 or 3 neighbours, it stay alive, else it dies
   const neighbours = sumNeighbours(grid, x, y)
   return !grid[x][y]
     ? neighbours === 3 ? true : false
