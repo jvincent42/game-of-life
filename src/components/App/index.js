@@ -1,5 +1,5 @@
 import React from 'react'
-import R, { compose, map, identity, xprod, range, path, indexOf, assocPath, not, reduce } from 'ramda'
+import R, { xprod, range, path, indexOf, assocPath, not, reduce } from 'ramda'
 
 import { createMatrice, fst, snd, xyLens } from '../../utils'
 
